@@ -9,7 +9,8 @@
 namespace lept
 {
 
-Value::Value()
+Value::Value() :
+    type_(Value::JsonType::kNumber)
 {}
 
 } //lept
