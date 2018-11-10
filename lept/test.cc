@@ -4,7 +4,7 @@
 #define BOOST_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
-
+#include <boost/test/floating_point_comparison.hpp>
 #include <lept/Parser.h>
 
 using namespace lept;
@@ -70,6 +70,38 @@ BOOST_AUTO_TEST_CASE(testParseLiteral)
     BOOST_CHECK(!ret);
     BOOST_CHECK(bad_null_parser.GetStatus() == Parser::Status::kInvalidValue);
     BOOST_CHECK_EQUAL(bad_null_parser.Index(), 0);
+}
+
+BOOST_AUTO_TEST_CASE(testParseNumber)
+{
+    std::vector<std::string> numbers = {
+            "0",
+            "-0",
+            "-0.0",
+            "1",
+            "-1",
+            "1.5",
+            "-1.5",
+            "3.1415",
+            "1E10",
+            "1e10",
+            "1E+10",
+            "1E-10",
+            "-1E10",
+            "-1e10",
+            "-1E-10",
+            "1.234E+10",
+            "1.234E-10"
+    };
+    for (const auto& number : numbers)
+    {
+        Parser number_parser(number);
+        bool ret = number_parser.ParseNumber();
+        BOOST_CHECK(ret);
+        BOOST_CHECK(number_parser.GetStatus() == Parser::Status::kOK);
+        BOOST_CHECK_CLOSE(strtod(number.c_str(), nullptr), number_parser.Number(), 0.01);
+        BOOST_CHECK_EQUAL(number_parser.Index(), number.size());
+    }
 }
 
 BOOST_AUTO_TEST_CASE(testParseValue)

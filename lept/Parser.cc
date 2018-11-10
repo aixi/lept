@@ -4,8 +4,9 @@
 
 #include <lept/Parser.h>
 #include <lept/Value.h>
-
+#include <errno.h>
 #include <assert.h>
+#include <math.h>
 
 namespace lept
 {
@@ -22,12 +23,14 @@ bool Parser::Parse()
 {
     assert(index_ == 0);
     assert(!json_.empty());
+    value_->Type(Value::JsonType::kNull);
     ParseWhiteSpace();
     if (ParseValue())
     {
         ParseWhiteSpace();
         if (json_[index_] != '\0')
         {
+            value_->Type(Value::JsonType::kNull);
             status_ = Status::kRootNotSingular;
         }
     }
@@ -59,6 +62,62 @@ bool Parser::ParseLiteral(std::string_view s, Value::JsonType type)
     return true;
 }
 
+bool Parser::ParseNumber()
+{
+    size_t old_index = index_;
+    if (json_[index_] == '-')
+    {
+        ++index_;
+    }
+    if (json_[index_] == '0')
+    {
+        ++index_;
+    }
+    else
+    {
+        if (!isdigit(json_[index_]))
+        {
+            status_ = Status::kInvalidValue;
+            return false;
+        }
+        for (; isdigit(json_[index_]); ++index_);
+    }
+    if (json_[index_] == '.')
+    {
+        ++index_;
+        if (!isdigit(json_[index_]))
+        {
+            status_ = Status::kInvalidValue;
+            return false;
+        }
+        for (; isdigit(json_[index_]); ++index_);
+    }
+    if (json_[index_] == 'e' || json_[index_] == 'E')
+    {
+        ++index_;
+        if (json_[index_] == '+' || json_[index_] == '-')
+        {
+            ++index_;
+        }
+        if (!isdigit(json_[index_]))
+        {
+            status_ = Status::kInvalidValue;
+            return false;
+        }
+        for (; isdigit(json_[index_]); ++index_);
+    }
+    errno = 0;
+    value_->Number(strtod(json_.data() + old_index, nullptr));
+    if (errno == ERANGE && (value_->Number() == HUGE_VAL || value_->Number() == -HUGE_VAL))
+    {
+        status_ = Status::kNumberTooBig;
+        return false;
+    }
+    status_ = Status::kOK;
+    value_->Type(Value::JsonType::kNumber);
+    return true;
+}
+
 bool Parser::ParseValue()
 {
     switch (json_[index_])
@@ -73,8 +132,7 @@ bool Parser::ParseValue()
             status_ = Status::kExpectValue;
             return false;
         default:
-            status_ = Status::kInvalidValue;
-            return false;
+            return ParseNumber();
     }
 }
 

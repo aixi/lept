@@ -24,7 +24,8 @@ public:
         kOK,
         kExpectValue,
         kInvalidValue,
-        kRootNotSingular
+        kRootNotSingular,
+        kNumberTooBig
     };
 
     explicit Parser(std::string_view json);
@@ -36,6 +37,18 @@ public:
     bool ParseValue();
 
     bool ParseLiteral(std::string_view s, Value::JsonType type);
+
+    bool ParseNumber();
+
+    Value::JsonType Type() const
+    {
+        return value_->Type();
+    }
+
+    double Number() const
+    {
+        return value_->Number();
+    };
 
     Status GetStatus() const 
     {

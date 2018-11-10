@@ -5,6 +5,7 @@
 #ifndef LEPT_VALUE_H
 #define LEPT_VALUE_H
 
+#include <assert.h>
 
 namespace lept
 {
@@ -36,12 +37,24 @@ public:
         return type_;
     }
 
+    double Number() const
+    {
+        assert(type_ == JsonType::kNumber);
+        return num_;
+    }
+
+    void Number(double n)
+    {
+        num_ = n;
+    }
+
     Value(const Value&) = delete;
     Value& operator=(const Value) = delete;
 
 
 private:
     JsonType type_;
+    double num_;
 
 }; //class Value
 
