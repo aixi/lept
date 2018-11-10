@@ -43,49 +43,6 @@ void Parser::ParseWhiteSpace()
     }
 }
 
-bool Parser::ParseNull()
-{
-    if (json_[index_] != 'n' || json_[index_ + 1] != 'u' ||
-        json_[index_ + 2] != 'l' || json_[index_ + 3] != 'l')
-    {
-        status_ = Status::kInvalidValue;
-        return false;
-    }
-    index_ += 4;
-    value_->Type(Value::JsonType::kNull);
-    status_ = Status::kOK;
-    return true;
-}
-
-bool Parser::ParseTrue()
-{
-    if (json_[index_] != 't' || json_[index_ + 1] != 'r' ||
-        json_[index_ + 2] != 'u' || json_[index_ + 3] != 'e')
-    {
-        status_ = Status::kInvalidValue;
-        return false;
-    }
-    index_ += 4;
-    value_->Type(Value::JsonType ::kTrue);
-    status_ = Status::kOK;
-    return true;
-}
-
-
-bool Parser::ParseFalse()
-{
-    if (json_[index_] != 'f' || json_[index_ + 1] != 'a' ||
-        json_[index_ + 2] != 'l' || json_[index_ + 3] != 's' || json_[index_ + 4] != 'e')
-    {
-        status_ = Status::kInvalidValue;
-        return false;
-    }
-    index_ += 5;
-    value_->Type(Value::JsonType::kFalse);
-    status_ = Status::kOK;
-    return true;
-}
-
 bool Parser::ParseLiteral(std::string_view s, Value::JsonType type)
 {
     for (size_t i = 0; i < s.size(); ++i)
@@ -107,11 +64,11 @@ bool Parser::ParseValue()
     switch (json_[index_])
     {
         case 't':
-            return ParseTrue();
+            return ParseLiteral("true", Value::JsonType::kTrue);
         case 'f':
-            return ParseFalse();
+            return ParseLiteral("false", Value::JsonType::kFalse);
         case 'n':
-            return ParseNull();
+            return ParseLiteral("null", Value::JsonType::kNull);
         case '\0':
             status_ = Status::kExpectValue;
             return false;

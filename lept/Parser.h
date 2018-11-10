@@ -37,12 +37,6 @@ public:
 
     bool ParseLiteral(std::string_view s, Value::JsonType type);
 
-    bool ParseTrue();
-
-    bool ParseFalse();
-
-    bool ParseNull();
-    
     Status GetStatus() const 
     {
         return status_;
