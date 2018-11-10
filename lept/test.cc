@@ -58,18 +58,25 @@ BOOST_AUTO_TEST_CASE(testNullType)
 
 BOOST_AUTO_TEST_CASE(testParseLiteral)
 {
-    Parser null_parser("null");
+    std::vector<std::string> literals = {
+            "null", "true", "false"
+    };
     bool ret;
-    ret = null_parser.ParseLiteral("null", Value::JsonType::kNull);
-    BOOST_CHECK(ret);
-    BOOST_CHECK(null_parser.GetStatus() == Parser::Status::kOK);
-    BOOST_CHECK_EQUAL(null_parser.Index(), 4);
+    for (const auto& literal : literals)
+    {
+        Parser null_parser(literal);
+        ret = null_parser.ParseLiteral(literal, Value::JsonType::kNull);
+        BOOST_CHECK(ret);
+        BOOST_CHECK(null_parser.GetStatus() == Parser::Status::kOK);
+        BOOST_CHECK_EQUAL(null_parser.Index(), literal.size());
+    }
 
     Parser bad_null_parser("nual");
     ret = bad_null_parser.ParseLiteral("null", Value::JsonType::kNull);
     BOOST_CHECK(!ret);
     BOOST_CHECK(bad_null_parser.GetStatus() == Parser::Status::kInvalidValue);
     BOOST_CHECK_EQUAL(bad_null_parser.Index(), 0);
+
 }
 
 BOOST_AUTO_TEST_CASE(testParseNumber)
@@ -99,7 +106,7 @@ BOOST_AUTO_TEST_CASE(testParseNumber)
         bool ret = number_parser.ParseNumber();
         BOOST_CHECK(ret);
         BOOST_CHECK(number_parser.GetStatus() == Parser::Status::kOK);
-        BOOST_CHECK_CLOSE(strtod(number.c_str(), nullptr), number_parser.Number(), 0.01);
+        BOOST_CHECK_CLOSE(strtod(number.c_str(), nullptr), number_parser.Number(), 0.0001);
         BOOST_CHECK_EQUAL(number_parser.Index(), number.size());
     }
 }
