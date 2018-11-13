@@ -7,6 +7,8 @@
 
 #include <string>
 #include <variant>
+#include <stack>
+#include <vector>
 #include <stddef.h>
 #include <assert.h>
 
@@ -52,14 +54,27 @@ public:
         content_ = n;
     }
 
+    std::string String() const
+    {
+        assert(type_ == JsonType::kString);
+        const std::vector<char>& char_vec = std::get<std::vector<char>>(content_);
+        std::string str(char_vec.begin(), char_vec.end());
+        return str;
+    }
+
+    void String(const std::vector<char>& str)
+    {
+        assert(type_ == JsonType::kString);
+        content_ = str;
+    }
+    
     Value(const Value&) = delete;
     Value& operator=(const Value) = delete;
 
 
 private:
     JsonType type_;
-    std::variant<double> content_;
-
+    std::variant<double, std::vector<char>> content_;
 }; //class Value
 
 } //namespace lept

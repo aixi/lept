@@ -5,7 +5,6 @@
 #ifndef LEPT_PARSER_H
 #define LEPT_PARSER_H
 
-#include <string_view>
 #include <memory>
 
 #include <lept/Value.h>
@@ -25,7 +24,12 @@ public:
         kExpectValue,
         kInvalidValue,
         kRootNotSingular,
-        kNumberTooBig
+        kNumberTooBig,
+        kStringMissingQuotationMark,
+        kInvalidStringChar,
+        kInvalidStringEscape,
+        kInvalidUnicodeHex,
+        kInvalidUnicodeSurrogate
     };
 
     explicit Parser(std::string_view json);
@@ -40,6 +44,12 @@ public:
 
     bool ParseNumber();
 
+    bool ParseString();
+
+    bool Parse4Hex(unsigned& u);
+
+    void EncodeUTF8(unsigned u);
+
     Value::JsonType Type() const
     {
         return value_->Type();
@@ -49,6 +59,11 @@ public:
     {
         return value_->Number();
     };
+
+    std::string String() const
+    {
+        return value_->String();
+    }
 
     Status GetStatus() const 
     {
@@ -65,10 +80,11 @@ public:
 
 private:
 
-    const std::string_view json_;
+    const std::string json_;
     Status status_;
     size_t index_;
     std::shared_ptr<Value> value_;
+    std::vector<char> stack_;
 
 }; //class Value
 
