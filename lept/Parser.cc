@@ -11,11 +11,11 @@
 namespace lept
 {
 
-Parser::Parser(std::string_view json) :
+Parser::Parser(const std::string& json, Value* value) :
     json_(json),
     status_(Status::kNotInit),
     index_(0),
-    value_(std::make_shared<Value>())
+    value_(value)
 {}
 
 
@@ -175,11 +175,9 @@ void Parser::EncodeUTF8(unsigned u)
 
 bool Parser::ParseString()
 {
+    assert(json_[index_] == '\"');
+    ++index_;
     unsigned u = 0, u2 = 0;
-    if (json_[index_++] != '\"')
-    {
-        return false;
-    }
     while (true)
     {
         char ch = json_[index_++];
@@ -188,6 +186,7 @@ bool Parser::ParseString()
             case '\"':
                 value_->Type(Value::JsonType::kString);
                 value_->String(stack_);
+                stack_.clear();
                 status_ = Status::kOK;
                 return true;
             case '\\':
@@ -268,6 +267,51 @@ bool Parser::ParseString()
     }
 }
 
+bool Parser::ParseArray()
+{
+    assert(json_[index_] == '[');
+    ++index_;
+    ParseWhiteSpace();
+    std::vector<Value> array_content;
+    if (json_[index_] == ']')
+    {
+        ++index_;
+        value_->Type(Value::JsonType::kArray);
+        value_->Array(array_content);
+        status_ = Status::kOK;
+        return true;
+    }
+    while (true)
+    {
+        if (!ParseValue())
+        {
+            value_->Type(Value::JsonType::kNull);
+            return false;
+        }
+        array_content.push_back(*value_);
+        ParseWhiteSpace();
+        if (json_[index_] == ',')
+        {
+            ++index_;
+            ParseWhiteSpace();
+        }
+        else if (json_[index_] == ']')
+        {
+            ++index_;
+            value_->Type(Value::JsonType::kArray);
+            value_->Array(array_content);
+            status_ = Status::kOK;
+            return true;
+        }
+        else
+        {
+            value_->Type(Value::JsonType::kNull);
+            status_ = Status::kArrayMissingCommaOrSquareBracket;
+            return false;
+        }
+    }
+}
+
 bool Parser::ParseValue()
 {
     switch (json_[index_])
@@ -280,6 +324,8 @@ bool Parser::ParseValue()
             return ParseLiteral("null", Value::JsonType::kNull);
         case '"':
             return ParseString();
+        case '[':
+            return ParseArray();
         case '\0':
             status_ = Status::kExpectValue;
             return false;

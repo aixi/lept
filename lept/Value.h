@@ -18,6 +18,8 @@ namespace lept
 
 class Value
 {
+    friend bool operator==(const Value& lhs, const Value& rhs);
+
 public:
     enum class JsonType
     {
@@ -54,6 +56,31 @@ public:
         content_ = n;
     }
 
+    void Array(const std::vector<Value>& array)
+    {
+        assert(type_ == JsonType::kArray);
+        content_ = array;
+    }
+
+    void ArrayPushBack(const Value& value)
+    {
+        assert(type_ == JsonType::kArray);
+        std::vector<Value>& array = std::get<std::vector<Value>>(content_);
+        array.push_back(value);
+    }
+
+    const std::vector<Value>& Array() const
+    {
+        assert(type_ == JsonType::kArray);
+        return std::get<std::vector<Value>>(content_);
+    }
+
+    const Value& operator[](size_t index) const
+    {
+        assert(type_ == JsonType::kArray);
+        return std::get<std::vector<Value>>(content_)[index];
+    }
+
     std::string String() const
     {
         assert(type_ == JsonType::kString);
@@ -68,14 +95,17 @@ public:
         content_ = str;
     }
     
-    Value(const Value&) = delete;
-    Value& operator=(const Value) = delete;
+    //default copy ctor assign are OK
 
 
 private:
     JsonType type_;
-    std::variant<double, std::vector<char>> content_;
+    std::variant<double, std::vector<char>, std::vector<Value>> content_;
 }; //class Value
+
+bool operator==(const Value& lhs, const Value& rhs);
+
+bool operator!=(const Value& lhs, const Value& rhs);
 
 } //namespace lept
 

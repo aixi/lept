@@ -65,14 +65,16 @@ BOOST_AUTO_TEST_CASE(testParseLiteral)
     bool ret;
     for (const auto& literal : literals)
     {
-        Parser null_parser(literal);
+        Value value;
+        Parser null_parser(literal, &value);
         ret = null_parser.ParseLiteral(literal, Value::JsonType::kNull);
         BOOST_CHECK(ret);
         BOOST_CHECK(null_parser.GetStatus() == Parser::Status::kOK);
         BOOST_CHECK_EQUAL(null_parser.Index(), literal.size());
     }
 
-    Parser bad_null_parser("nual");
+    Value value1;
+    Parser bad_null_parser("nual", &value1);
     ret = bad_null_parser.ParseLiteral("null", Value::JsonType::kNull);
     BOOST_CHECK(!ret);
     BOOST_CHECK(bad_null_parser.GetStatus() == Parser::Status::kInvalidValue);
@@ -103,7 +105,8 @@ BOOST_AUTO_TEST_CASE(testParseNumber)
     };
     for (const auto& number : numbers)
     {
-        Parser number_parser(number);
+        Value number_value;
+        Parser number_parser(number, &number_value);
         bool ret = number_parser.ParseNumber();
         BOOST_CHECK(ret);
         BOOST_CHECK(number_parser.GetStatus() == Parser::Status::kOK);
@@ -115,10 +118,10 @@ BOOST_AUTO_TEST_CASE(testParseNumber)
 BOOST_AUTO_TEST_CASE(testParseString)
 {
     std::vector<std::string> string_expect = {
-//            "",
-//            "Hello",
-//            "Hello\nWorld",
-//            "\" \\ / \b \f \n \r \t",
+            "",
+            "Hello",
+            "Hello\nWorld",
+            "\" \\ / \b \f \n \r \t",
 //            "", '\0' need special treatment
              "\x24",
              "\xC2\xA2",
@@ -126,20 +129,21 @@ BOOST_AUTO_TEST_CASE(testParseString)
 //             "\xF0\x9D\x84\x9E"
     };
     std::vector<std::string> string_jsons = {
-//            "\"\"",
-//            "\"Hello\"",
-//            "\"Hello\\nWorld\"",
-//            "\"\\\" \\\\ \\/ \\b \\f \\n \\r \\t\"",
+            "\"\"",
+            "\"Hello\"",
+            "\"Hello\\nWorld\"",
+            "\"\\\" \\\\ \\/ \\b \\f \\n \\r \\t\"",
 //            "\"\\u0000\"",
             "\"\\u0024\"",
             "\"\\u00A2\"",
             "\"\\u20AC\"",
-//            "\"\\uD834\\uDD1E\"" G clef sign U+1D11E test failed
+//FIXME:            "\"\\uD834\\uDD1E\"" G clef sign U+1D11E test failed
     };
     bool ret = false;
     for (size_t i = 0; i < string_expect.size(); ++i)
     {
-        Parser string_parser(string_jsons[i]);
+        Value string_value;
+        Parser string_parser(string_jsons[i], &string_value);
         ret = string_parser.Parse();
         BOOST_CHECK(ret);
         BOOST_CHECK(string_parser.GetStatus() == Parser::Status::kOK);
@@ -150,24 +154,78 @@ BOOST_AUTO_TEST_CASE(testParseString)
 
 }
 
+BOOST_AUTO_TEST_CASE(testParseArray)
+{
+    Value value;
+    std::string empty_array("[]");
+    Parser parser1(empty_array, &value);
+    bool ret = parser1.Parse();
+    BOOST_CHECK(ret);
+    BOOST_CHECK(parser1.GetStatus() == Parser::Status::kOK);
+    std::vector<Value> expect;
+    BOOST_CHECK(expect == value.Array());
+
+    Value value1;
+    std::string array("[-1.5 , true, \"hello\"]");
+    Parser parser2(array, &value1);
+    ret = parser2.Parse();
+    BOOST_CHECK(ret);
+    BOOST_CHECK(parser2.GetStatus() == Parser::Status::kOK);
+    BOOST_CHECK(value1.Type() == Value::JsonType::kArray);
+    std::vector<Value> json_array = value1.Array();
+    BOOST_CHECK(json_array[0].Type() == Value::JsonType::kNumber);
+    BOOST_CHECK_CLOSE(json_array[0].Number(), -1.5, 0.001);
+    BOOST_CHECK(json_array[1].Type() == Value::JsonType::kTrue);
+    BOOST_CHECK(json_array[2].Type() == Value::JsonType::kString);
+    BOOST_CHECK_EQUAL(json_array[2].String(), "hello");
+}
+
+BOOST_AUTO_TEST_CASE(testNestedArray)
+{
+    Value value2;
+    std::string nested_array("[ [],  [0], [ 0 , 1 ], [0, 1, 2]]");
+    Parser parser3(nested_array, &value2);
+    bool ret = parser3.Parse();
+    BOOST_CHECK(ret);
+    BOOST_CHECK(parser3.GetStatus() == Parser::Status::kOK);
+    BOOST_CHECK(parser3.Type() == Value::JsonType::kArray);
+    const std::vector<Value>& number_array = value2.Array();
+    BOOST_CHECK_EQUAL(number_array.size(), 4);
+    BOOST_CHECK(value2[0].Type() == Value::JsonType::kArray);
+    BOOST_CHECK(value2[1].Type() == Value::JsonType::kArray);
+    BOOST_CHECK(value2[1][0].Type() == Value::JsonType::kNumber);
+    BOOST_CHECK_CLOSE(value2[1][0].Number(), 0.0, 0.001);
+    for (size_t i = 0; i < 4; ++i)
+    {
+        for (size_t j = 0; j < i; ++j)
+        {
+            BOOST_CHECK(value2[i][j].Type() == Value::JsonType::kNumber);
+            BOOST_CHECK_CLOSE(value2[i][j].Number(), j, 0.001);
+        }
+    }
+}
+
 BOOST_AUTO_TEST_CASE(testParseValue)
 {
+    Value value1;
     std::string json("  false  \n");
-    Parser parser(json);
+    Parser parser(json, &value1);
     bool ret = parser.Parse();
     BOOST_CHECK(ret);
     BOOST_CHECK(parser.GetStatus() == Parser::Status::kOK);
     BOOST_CHECK_EQUAL(parser.Index(), json.size());
 
+    Value value2;
     std::string bad_json("  \t \r flase \n");
-    Parser bad_parser(bad_json);
+    Parser bad_parser(bad_json, &value2);
     ret = bad_parser.Parse();
     BOOST_CHECK(!ret);
     BOOST_CHECK(bad_parser.GetStatus() == Parser::Status::kInvalidValue);
     BOOST_CHECK(bad_parser.Index() != json.size());
 
+    Value value3;
     std::string string_json("\n\t \"\\\" \\\\ \\/ \\b \\f \\n \\r \\t\"   \t\n");
-    Parser string_json_parser(string_json);
+    Parser string_json_parser(string_json, &value3);
     ret = string_json_parser.Parse();
     BOOST_CHECK(ret);
     BOOST_CHECK(string_json_parser.GetStatus() == Parser::Status::kOK);

@@ -34,11 +34,13 @@ int main()
 //    std::string_view sv(str);
 //    test("abc");
 //    test2("abc");
-    std::string json("\"\\u0000\"");
-    std::string expect;
-    expect.push_back('\0');
-    Parser parser(json);
-    parser.Parse();
-    std::cout << (parser.String() == expect);
+//    std::string json("\"\\u0000\"");
+//    std::string expect;
+//    expect.push_back('\0');
+//    Parser parser(json);
+//    parser.Parse();
+//    std::cout << (parser.String() == expect);
+    int a = 0xFFFFFFFF + 1;
+    std::cout << a;
     return 0;
 }

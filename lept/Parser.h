@@ -29,10 +29,11 @@ public:
         kInvalidStringChar,
         kInvalidStringEscape,
         kInvalidUnicodeHex,
-        kInvalidUnicodeSurrogate
+        kInvalidUnicodeSurrogate,
+        kArrayMissingCommaOrSquareBracket
     };
 
-    explicit Parser(std::string_view json);
+    Parser(const std::string& json, Value* value);
 
     bool Parse();
 
@@ -47,6 +48,8 @@ public:
     bool ParseString();
 
     bool Parse4Hex(unsigned& u);
+
+    bool ParseArray();
 
     void EncodeUTF8(unsigned u);
 
@@ -80,10 +83,10 @@ public:
 
 private:
 
-    const std::string json_;
+    std::string json_;
     Status status_;
     size_t index_;
-    std::shared_ptr<Value> value_;
+    Value* value_;
     std::vector<char> stack_;
 
 }; //class Value
