@@ -22,6 +22,7 @@ class Value
 
 public:
     using ArrayType = std::vector<Value>;
+    //FIXME: std::unordered_map<std::string, Value>> ?
     using ObjectType = std::vector<std::pair<std::string, Value>>;
 
     enum class JsonType
@@ -53,13 +54,15 @@ public:
 
     void Array(const std::vector<Value>& array);
 
-    void Object(const ObjectType& object);
-
     void ArrayPushBack(const Value& value);
 
     const ArrayType& Array() const;
 
+    void Object(const ObjectType& object);
+
     const Value& operator[](size_t index) const;
+
+    const Value& operator[](const std::string& key) const;
 
     const std::string& String() const;
 

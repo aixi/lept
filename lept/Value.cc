@@ -3,6 +3,7 @@
 //
 
 #include <lept/Value.h>
+#include <algorithm>
 
 namespace lept
 {
@@ -81,6 +82,15 @@ const Value& Value::operator[](size_t index) const
 {
     assert(type_ == JsonType::kArray);
     return std::get<ArrayType>(content_)[index];
+}
+
+const Value& Value::operator[](const std::string& key) const
+{
+    assert(type_ == JsonType::kObject);
+    const ObjectType& content = std::get<ObjectType>(content_);
+    //FIXME: reduce O(n) to O(1)
+    auto ret = std::find_if(content.begin(), content.end(), [&key](const auto& it){ return it.first == key;});
+    return ret->second;
 }
 
 const std::string& Value::String() const

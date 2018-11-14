@@ -5,7 +5,6 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
-#include <iostream>
 #include <lept/Parser.h>
 
 using namespace lept;
@@ -205,6 +204,55 @@ BOOST_AUTO_TEST_CASE(testNestedArray)
     }
 }
 
+BOOST_AUTO_TEST_CASE(testParseObject)
+{
+    Value value;
+    std::string object_json("{}");
+    Parser parser(object_json, &value);
+    bool ret = parser.Parse();
+    BOOST_CHECK(ret);
+    BOOST_CHECK(parser.GetStatus() == Parser::Status::kOK);
+    BOOST_CHECK(value.Type() == Value::JsonType::kObject);
+
+    Value value1;
+    object_json = "{ \"abc\" : true }";
+    Parser parser1(object_json, &value1);
+    ret = parser1.Parse();
+    BOOST_CHECK(ret);
+    BOOST_CHECK(parser1.GetStatus() == Parser::Status::kOK);
+    BOOST_CHECK(value1.Type() == Value::JsonType::kObject);
+    Value true_value = value1["abc"];
+    BOOST_CHECK(true_value.Type() == Value::JsonType::kTrue);
+
+    Value value2;
+    object_json = "{ \"n\" : null , \"a\" : [0, 1, 2] }";
+    Parser parser2(object_json, &value2);
+    ret = parser2.Parse();
+    BOOST_CHECK(ret);
+    BOOST_CHECK(parser2.GetStatus() == Parser::Status::kOK);
+    BOOST_CHECK(value2.Type() == Value::JsonType::kObject);
+    Value null_value = value2["n"];
+    BOOST_CHECK(null_value.Type() == Value::JsonType::kNull);
+    Value array_value = value2["a"];
+    BOOST_CHECK(array_value.Type() == Value::JsonType::kArray);
+    BOOST_CHECK(array_value[0].Type() == Value::JsonType::kNumber);
+    BOOST_CHECK_CLOSE(array_value[0].Number(), 0, 0.001);
+    BOOST_CHECK(array_value[1].Type() == Value::JsonType::kNumber);
+    BOOST_CHECK_CLOSE(array_value[1].Number(), 1, 0.001);
+    BOOST_CHECK(array_value[2].Type() == Value::JsonType::kNumber);
+    BOOST_CHECK_CLOSE(array_value[2].Number(), 2, 0.001);
+}
+
+BOOST_AUTO_TEST_CASE(testParseNestedObject)
+{
+    Value value;
+    std::string nested_object_json("{\"o\" : {\"t\" : true, \"f\" : false, \"n\" : null}}");
+    Parser parser(nested_object_json, &value);
+    bool ret = parser.Parse();
+    BOOST_CHECK(ret);
+    BOOST_CHECK(parser.GetStatus() == Parser::Status::kOK);
+}
+
 BOOST_AUTO_TEST_CASE(testParseValue)
 {
     Value value1;
@@ -232,4 +280,5 @@ BOOST_AUTO_TEST_CASE(testParseValue)
     BOOST_CHECK(string_json_parser.Type() == Value::JsonType::kString);
     BOOST_CHECK_EQUAL(string_json_parser.String(), "\" \\ / \b \f \n \r \t");
 }
+
 
