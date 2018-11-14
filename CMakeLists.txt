@@ -47,9 +47,6 @@ set(SOURCE_FILES
 
 add_library(lept STATIC ${SOURCE_FILES})
 
-add_executable(main main.cpp)
-target_link_libraries(main lept)
-
 add_executable(parse_unittest lept/test.cc)
 target_link_libraries(parse_unittest lept boost_unit_test_framework)
 add_test(NAME parse_unittest COMMAND parse_unittest)
