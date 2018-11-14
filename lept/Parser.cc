@@ -173,7 +173,7 @@ void Parser::EncodeUTF8(unsigned u)
     }
 }
 
-bool Parser::ParseString()
+bool Parser::ParseStringImpl(std::string& str)
 {
     assert(json_[index_] == '\"');
     ++index_;
@@ -184,10 +184,8 @@ bool Parser::ParseString()
         switch (ch)
         {
             case '\"':
-                value_->Type(Value::JsonType::kString);
-                value_->String(stack_);
+                std::copy(stack_.begin(), stack_.end(), std::back_inserter(str));
                 stack_.clear();
-                status_ = Status::kOK;
                 return true;
             case '\\':
                 switch (json_[index_++])
@@ -267,12 +265,25 @@ bool Parser::ParseString()
     }
 }
 
+bool Parser::ParseString()
+{
+    std::string str;
+    if (!ParseStringImpl(str))
+    {
+        return false;
+    }
+    value_->Type(Value::JsonType::kString);
+    value_->String(str);
+    status_ = Status::kOK;
+    return true;
+}
+
 bool Parser::ParseArray()
 {
     assert(json_[index_] == '[');
     ++index_;
     ParseWhiteSpace();
-    std::vector<Value> array_content;
+    Value::ArrayType array_content;
     if (json_[index_] == ']')
     {
         ++index_;
@@ -312,6 +323,74 @@ bool Parser::ParseArray()
     }
 }
 
+bool Parser::ParseObject()
+{
+    assert(json_[index_] == '{');
+    ++index_;
+    ParseWhiteSpace();
+    Value::ObjectType object_content;
+    std::string key;
+    if (json_[index_] == '}')
+    {
+        ++index_;
+        value_->Type(Value::JsonType::kObject);
+        value_->Object(object_content);
+        status_ = Status::kOK;
+        return true;
+    }
+    while (true)
+    {
+        if (json_[index_] != '\"')
+        {
+            value_->Type(Value::JsonType::kNull);
+            status_ = Status::kObjectMissingKey;
+            return false;
+        }
+        if (!ParseStringImpl(key))
+        {
+            value_->Type(Value::JsonType::kNull);
+            status_ = Status::kObjectMissingKey;
+            return false;
+        }
+        ParseWhiteSpace();
+        if (json_[index_++] != ':')
+        {
+            value_->Type(Value::JsonType::kNull);
+            status_ = Status::kObjectMissingColon;
+            return false;
+        }
+        ParseWhiteSpace();
+        if (!ParseValue())
+        {
+            value_->Type(Value::JsonType::kNull);
+            return false;
+        }
+        object_content.push_back(std::make_pair(key, *value_));
+        value_->Type(Value::JsonType::kNull);
+        key.clear();
+        ParseWhiteSpace();
+        if (json_[index_] == ',')
+        {
+            ++index_;
+            ParseWhiteSpace();
+        }
+        else if (json_[index_] == '}')
+        {
+            ++index_;
+            value_->Type(Value::JsonType::kObject);
+            value_->Object(object_content);
+            status_ = Status::kOK;
+            return true;
+        }
+        else
+        {
+            value_->Type(Value::JsonType::kNull);
+            status_ = Status::kObjectMissingCommaOrCurlyBracket;
+            return false;
+        }
+    }
+}
+
 bool Parser::ParseValue()
 {
     switch (json_[index_])
@@ -326,6 +405,8 @@ bool Parser::ParseValue()
             return ParseString();
         case '[':
             return ParseArray();
+        case '{':
+            return ParseObject();
         case '\0':
             status_ = Status::kExpectValue;
             return false;

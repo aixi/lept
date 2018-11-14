@@ -30,7 +30,10 @@ public:
         kInvalidStringEscape,
         kInvalidUnicodeHex,
         kInvalidUnicodeSurrogate,
-        kArrayMissingCommaOrSquareBracket
+        kArrayMissingCommaOrSquareBracket,
+        kObjectMissingKey,
+        kObjectMissingColon,
+        kObjectMissingCommaOrCurlyBracket
     };
 
     Parser(const std::string& json, Value* value);
@@ -47,9 +50,13 @@ public:
 
     bool ParseString();
 
+    bool ParseStringImpl(std::string& str);
+
     bool Parse4Hex(unsigned& u);
 
     bool ParseArray();
+
+    bool ParseObject();
 
     void EncodeUTF8(unsigned u);
 

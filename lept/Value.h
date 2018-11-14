@@ -21,6 +21,9 @@ class Value
     friend bool operator==(const Value& lhs, const Value& rhs);
 
 public:
+    using ArrayType = std::vector<Value>;
+    using ObjectType = std::vector<std::pair<std::string, Value>>;
+
     enum class JsonType
     {
         kNull,
@@ -44,63 +47,31 @@ public:
         return type_;
     }
 
-    double Number() const
-    {
-        assert(type_ == JsonType::kNumber);
-        return std::get<double>(content_);
-    }
+    double Number() const;
 
-    void Number(double n)
-    {
-        assert(type_ == JsonType::kNumber);
-        content_ = n;
-    }
+    void Number(double n);
 
-    void Array(const std::vector<Value>& array)
-    {
-        assert(type_ == JsonType::kArray);
-        content_ = array;
-    }
+    void Array(const std::vector<Value>& array);
 
-    void ArrayPushBack(const Value& value)
-    {
-        assert(type_ == JsonType::kArray);
-        std::vector<Value>& array = std::get<std::vector<Value>>(content_);
-        array.push_back(value);
-    }
+    void Object(const ObjectType& object);
 
-    const std::vector<Value>& Array() const
-    {
-        assert(type_ == JsonType::kArray);
-        return std::get<std::vector<Value>>(content_);
-    }
+    void ArrayPushBack(const Value& value);
 
-    const Value& operator[](size_t index) const
-    {
-        assert(type_ == JsonType::kArray);
-        return std::get<std::vector<Value>>(content_)[index];
-    }
+    const ArrayType& Array() const;
 
-    std::string String() const
-    {
-        assert(type_ == JsonType::kString);
-        const std::vector<char>& char_vec = std::get<std::vector<char>>(content_);
-        std::string str(char_vec.begin(), char_vec.end());
-        return str;
-    }
+    const Value& operator[](size_t index) const;
 
-    void String(const std::vector<char>& str)
-    {
-        assert(type_ == JsonType::kString);
-        content_ = str;
-    }
+    const std::string& String() const;
+
+    void String(const std::string& str);
     
-    //default copy ctor assign are OK
-
-
+    //default copy constructor/assignment are OK
+    
+    
 private:
     JsonType type_;
-    std::variant<double, std::vector<char>, std::vector<Value>> content_;
+    std::variant<double, std::string, ArrayType, ObjectType> content_;
+    
 }; //class Value
 
 bool operator==(const Value& lhs, const Value& rhs);

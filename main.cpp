@@ -42,5 +42,6 @@ int main()
 //    std::cout << (parser.String() == expect);
     int a = 0xFFFFFFFF + 1;
     std::cout << a;
+    std::cout << (a >> 0);
     return 0;
 }
