@@ -34,7 +34,7 @@ public:
         kObject
     };
 
-    Value();
+    explicit Value(JsonType type = JsonType::kNull);
 
     void Type(JsonType type)
     {

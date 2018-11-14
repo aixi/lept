@@ -50,8 +50,8 @@ bool operator!=(const Value& lhs, const Value& rhs)
     return !(lhs == rhs);
 }
 
-Value::Value() :
-        type_(JsonType::kNull)
+Value::Value(JsonType type) :
+        type_(type)
 {}
 
 double Value::Number() const
