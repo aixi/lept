@@ -18,8 +18,6 @@ namespace lept
 
 class Value
 {
-    friend bool operator==(const Value& lhs, const Value& rhs);
-
 public:
     using ArrayType = std::vector<Value>;
     //FIXME: std::unordered_map<std::string, Value>> ?

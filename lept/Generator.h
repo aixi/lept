@@ -15,9 +15,16 @@ class Generator
 public:
     Generator();
 
-    std::string GenerateString(const std::string& str);
+    void GenerateString(const std::string& str);
 
     void GenerateValue(const Value& value);
+
+    void Reset();
+
+    const std::string& GetJson() const
+    {
+        return json_;
+    }
 
     Generator(const Generator&) = delete;
     Generator& operator=(const Generator&) = delete;

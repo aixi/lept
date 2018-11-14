@@ -5,6 +5,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
+#include <lept/Generator.h>
 #include <lept/Parser.h>
 
 using namespace lept;
@@ -279,6 +280,18 @@ BOOST_AUTO_TEST_CASE(testParseValue)
     BOOST_CHECK(string_json_parser.GetStatus() == Parser::Status::kOK);
     BOOST_CHECK(string_json_parser.Type() == Value::JsonType::kString);
     BOOST_CHECK_EQUAL(string_json_parser.String(), "\" \\ / \b \f \n \r \t");
+}
+
+BOOST_AUTO_TEST_CASE(testGenerator)
+{
+    Value value;
+    std::string json("{ \"n\" : null , \"a\" : [0, 1, 2] }");
+    Parser parser(json, &value);
+    bool ret = parser.Parse();
+    (void) ret;
+    Generator generator;
+    generator.GenerateValue(value);
+    BOOST_CHECK_EQUAL(generator.GetJson(), "{\"n\":null,\"a\":[0,1,2]}");
 }
 
 

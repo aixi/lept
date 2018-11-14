@@ -12,11 +12,11 @@ namespace lept
 
 bool operator==(const Value& lhs, const Value& rhs)
 {
-    if (lhs.type_ != rhs.type_)
+    if (lhs.Type() != rhs.Type())
     {
         return false;
     }
-    switch (lhs.type_)
+    switch (lhs.Type())
     {
         case Value::JsonType::kNull:
         case Value::JsonType::kTrue:

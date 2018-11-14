@@ -31,7 +31,7 @@ void Generator::GenerateValue(const Value& value)
         }
             break;
         case Value::JsonType::kString:
-            json_.append(GenerateString(value.String()));
+            GenerateString(value.String());
             break;
         case Value::JsonType::kArray:
         {
@@ -39,6 +39,10 @@ void Generator::GenerateValue(const Value& value)
             size_t array_len = value.ArraySize();
             for (size_t i = 0; i < array_len; ++i)
             {
+                if (i > 0)
+                {
+                    json_.push_back(',');
+                }
                 GenerateValue(value[i]);
             }
             json_.push_back(']');
@@ -65,8 +69,9 @@ void Generator::GenerateValue(const Value& value)
     }
 }
 
-std::string Generator::GenerateString(const std::string& str)
+void Generator::GenerateString(const std::string& str)
 {
+    json_.append("\"");
     for (char ch : str)
     {
         switch (ch)
@@ -105,7 +110,12 @@ std::string Generator::GenerateString(const std::string& str)
                 }
         }
     }
-    return str;
+    json_.append("\"");
 }
 
+void Generator::Reset()
+{
+    json_.clear();
 }
+
+} //namespace letp
