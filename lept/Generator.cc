@@ -7,8 +7,7 @@
 namespace lept
 {
 
-Generator::Generator()
-{}
+Generator::Generator() = default;
 
 void Generator::GenerateValue(const Value& value)
 {
