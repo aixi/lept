@@ -4,6 +4,8 @@
 
 #include <lept/Value.h>
 #include <algorithm>
+#include "Value.h"
+
 
 namespace lept
 {
@@ -27,8 +29,19 @@ bool operator==(const Value& lhs, const Value& rhs)
         case Value::JsonType::kArray:
             return lhs.Array() == rhs.Array();
         case Value::JsonType::kObject:
-            //TODO
-            return false;
+            if (lhs.ObjectSize() != rhs.ObjectSize())
+            {
+                return false;
+            }
+            const auto& object_content = lhs.Object();
+            for (const auto& pair : object_content)
+            {
+                if (pair.second != rhs[pair.first])
+                {
+                    return false;
+                }
+            }
+            return true;
     }
 }
 
@@ -53,16 +66,23 @@ void Value::Number(double n)
     content_ = n;
 }
 
+const std::string& Value::String() const
+{
+    assert(type_ == JsonType::kString);
+    const std::string& str = std::get<std::string>(content_);
+    return str;
+}
+
+void Value::String(const std::string& str)
+{
+    assert(type_ == JsonType::kString);
+    content_ = str;
+}
+
 void Value::Array(const std::vector<Value>& array)
 {
     assert(type_ == JsonType::kArray);
     content_ = array;
-}
-
-void Value::Object(const ObjectType& object)
-{
-    assert(type_ == JsonType::kObject);
-    content_ = object;
 }
 
 void Value::ArrayPushBack(const Value& value)
@@ -70,6 +90,13 @@ void Value::ArrayPushBack(const Value& value)
     assert(type_ == JsonType::kArray);
     ArrayType& array = std::get<ArrayType>(content_);
     array.push_back(value);
+}
+
+size_t Value::ArraySize() const
+{
+    assert(type_ == JsonType::kArray);
+    const auto& content = std::get<ArrayType>(content_);
+    return content.size();
 }
 
 const Value::ArrayType& Value::Array() const
@@ -84,6 +111,25 @@ const Value& Value::operator[](size_t index) const
     return std::get<ArrayType>(content_)[index];
 }
 
+void Value::Object(const ObjectType& object)
+{
+    assert(type_ == JsonType::kObject);
+    content_ = object;
+}
+
+const Value::ObjectType& Value::Object() const
+{
+    assert(type_ == JsonType::kObject);
+    return std::get<ObjectType >(content_);
+}
+
+size_t Value::ObjectSize() const
+{
+    assert(type_ == JsonType::kObject);
+    const auto& content = std::get<ObjectType>(content_);
+    return content.size();
+}
+
 const Value& Value::operator[](const std::string& key) const
 {
     assert(type_ == JsonType::kObject);
@@ -93,18 +139,7 @@ const Value& Value::operator[](const std::string& key) const
     return ret->second;
 }
 
-const std::string& Value::String() const
-{
-    assert(type_ == JsonType::kString);
-    const std::string& str = std::get<std::string>(content_);
-    return str;
-}
 
-void Value::String(const std::string& str)
-{
-    assert(type_ == JsonType::kString);
-    content_ = str;
-}
 
 
 } //lept

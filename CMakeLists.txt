@@ -41,7 +41,9 @@ set(SOURCE_FILES
         lept/Value.h
         lept/Value.cc
         lept/Parser.h
-        lept/Parser.cc)
+        lept/Parser.cc
+        lept/Generator.h
+        lept/Generator.cc)
 
 add_library(lept STATIC ${SOURCE_FILES})
 

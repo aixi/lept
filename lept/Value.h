@@ -54,11 +54,17 @@ public:
 
     void Array(const std::vector<Value>& array);
 
+    size_t ArraySize() const;
+
     void ArrayPushBack(const Value& value);
 
     const ArrayType& Array() const;
 
     void Object(const ObjectType& object);
+
+    const ObjectType& Object() const;
+
+    size_t ObjectSize() const;
 
     const Value& operator[](size_t index) const;
 
